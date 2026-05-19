@@ -1,0 +1,22 @@
+{
+  "name": "reserva-app-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm --parallel --filter client --filter server run dev",
+    "dev:client": "pnpm --filter client run dev",
+    "dev:server": "pnpm --filter server run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.1.3",
+      "onFail": "download"
+    }
+  },
+  "type": "module"
+}
