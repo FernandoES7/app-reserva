@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import pool from './database/connection.js';
-import habitacionRoutes from './routes/habitacion.routes.js';
-import reservaRoutes    from './routes/reserva.routes.js';
+import habitacionRoutes from './routes/Habitacion.js';
+import reservaRoutes    from './routes/Reserva.js';
 
 const app = express();
 
