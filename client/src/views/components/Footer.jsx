@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from 'lucide-react';
+import { MapPin, Phone, Mail } from 'lucide-react';
+import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6';
 
 const QUICK_LINKS = [
-  { label: 'Inicio',       to: '/'            },
+  { label: 'Inicio', to: '/' },
   { label: 'Habitaciones', to: '/habitaciones' },
-  { label: 'Reservar',     to: '/reservar'     },
-  { label: 'Promociones',  to: '/promociones'  },
+  { label: 'Reservar', to: '/reservar' },
+  { label: 'Promociones', to: '/promociones' },
 ];
 
 export default function Footer() {
@@ -24,6 +25,7 @@ export default function Footer() {
               <p className="text-gray-400 text-xs">José Luis</p>
             </div>
           </div>
+
           <p className="text-sm text-gray-400 leading-relaxed">
             Tu hogar lejos de casa en el corazón de Miraflores, Lima.
             Confort, elegancia y atención personalizada.
@@ -33,6 +35,7 @@ export default function Footer() {
         {/* Quick Links */}
         <div>
           <h3 className="text-white font-semibold mb-4">Enlaces Rápidos</h3>
+
           <ul className="space-y-2">
             {QUICK_LINKS.map(({ label, to }) => (
               <li key={to}>
@@ -50,15 +53,20 @@ export default function Footer() {
         {/* Contact */}
         <div>
           <h3 className="text-white font-semibold mb-4">Contacto</h3>
+
           <ul className="space-y-3">
             <li className="flex items-start gap-2 text-sm text-gray-400">
               <MapPin size={15} className="mt-0.5 shrink-0 text-gray-500" />
-              Av. José Larco 1234, Miraflores<br />Lima, Perú
+              Av. José Larco 1234, Miraflores
+              <br />
+              Lima, Perú
             </li>
+
             <li className="flex items-center gap-2 text-sm text-gray-400">
               <Phone size={15} className="text-gray-500" />
               +51 1 234-5678
             </li>
+
             <li className="flex items-center gap-2 text-sm text-gray-400">
               <Mail size={15} className="text-gray-500" />
               info@hostaljl.com
@@ -69,11 +77,12 @@ export default function Footer() {
         {/* Social + image */}
         <div>
           <h3 className="text-white font-semibold mb-4">Síguenos</h3>
+
           <div className="flex gap-3 mb-5">
             {[
-              { Icon: Facebook,  href: '#' },
-              { Icon: Instagram, href: '#' },
-              { Icon: Twitter,   href: '#' },
+              { Icon: FaFacebookF, href: '#' },
+              { Icon: FaInstagram, href: '#' },
+              { Icon: FaXTwitter, href: '#' },
             ].map(({ Icon, href }, i) => (
               <a
                 key={i}
@@ -84,12 +93,14 @@ export default function Footer() {
               </a>
             ))}
           </div>
+
           <img
             src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&q=80"
             alt="Hostal Boutique"
             className="rounded-xl w-full h-28 object-cover opacity-80"
           />
         </div>
+
       </div>
 
       {/* Bottom bar */}
