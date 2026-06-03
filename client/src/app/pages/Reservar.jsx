@@ -7,7 +7,7 @@ import { Step1Fechas } from '../components/reservar/Step1Fechas';
 import { Step2DatosPersonales } from '../components/reservar/Step2DatosPersonales';
 import { Step3Pago } from '../components/reservar/Step3Pago';
 import { Step4Confirmacion } from '../components/reservar/Step4Confirmacion';
-import './Reservar.css';
+/* import './Reservar.css'; */
 
 function buildEstadoInicial(user) {
   const partes = (user?.name || '').trim().split(/\s+/);
