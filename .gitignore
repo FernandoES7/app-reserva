@@ -43,3 +43,7 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Old Front-end
+client/src/services/*
+client/src/views/*

@@ -3,12 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
+const PASSWORD_RULES = [
+  { id: 'length', label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
+  { id: 'upper', label: 'Al menos una letra mayúscula', test: (p) => /[A-Z]/.test(p) },
+  { id: 'number', label: 'Al menos un número', test: (p) => /\d/.test(p) },
+  { id: 'special', label: 'Al menos un carácter especial', test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+];
+
+const isPasswordValid = (password) => PASSWORD_RULES.every((r) => r.test(password));
+
 export function Login() {
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const [tab, setTab] = useState('login');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [regData, setRegData] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [pwFocus, setPwFocus] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,8 +38,11 @@ export function Login() {
     e.preventDefault();
     setError('');
     if (!regData.name || !regData.email || !regData.password) { setError('Completa todos los campos'); return; }
+    if (!isPasswordValid(regData.password)) {
+      setError('La contraseña no cumple los requisitos de seguridad');
+      return;
+    }
     if (regData.password !== regData.confirm) { setError('Las contraseñas no coinciden'); return; }
-    if (regData.password.length < 6) { setError('Contraseña mínimo 6 caracteres'); return; }
     try {
       setLoading(true);
       await register(regData.name, regData.email, regData.password);
@@ -37,6 +50,9 @@ export function Login() {
     } catch (err) { setError(err.message || 'Error al registrar'); }
     finally { setLoading(false); }
   };
+
+  const inputClass =
+    'w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] focus:bg-white transition-all text-gray-700';
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4"
@@ -80,17 +96,21 @@ export function Login() {
             {tab === 'login' ? (
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {[
-                  { label: 'Correo electrónico', icon: 'email',    type: 'email',    field: 'email',    placeholder: 'tu@email.com' },
-                  { label: 'Contraseña',          icon: 'lock',     type: 'password', field: 'password', placeholder: '••••••••' },
+                  { label: 'Correo electrónico', icon: 'email', type: 'email', field: 'email', placeholder: 'tu@email.com' },
+                  { label: 'Contraseña', icon: 'lock', type: 'password', field: 'password', placeholder: '••••••••' },
                 ].map(({ label, icon, type, field, placeholder }) => (
                   <div key={field}>
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
                       <span className="material-icons" style={{ fontSize: '14px' }}>{icon}</span> {label}
                     </label>
-                    <input type={type} value={loginData[field]} onChange={e => setLoginData({ ...loginData, [field]: e.target.value })}
+                    <input
+                      type={type}
+                      value={loginData[field]}
+                      onChange={(e) => setLoginData({ ...loginData, [field]: e.target.value })}
                       placeholder={placeholder}
-                      className="w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] focus:bg-white transition-all text-gray-700"
-                      style={{ padding: '14px 16px' }} />
+                      className={inputClass}
+                      style={{ padding: '14px 16px' }}
+                    />
                   </div>
                 ))}
                 <button type="submit" disabled={loading}
@@ -102,22 +122,87 @@ export function Login() {
               </form>
             ) : (
               <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                {[
-                  { label: 'Nombre completo',     icon: 'person',  type: 'text',     field: 'name',     placeholder: 'Juan Pérez' },
-                  { label: 'Correo electrónico',  icon: 'email',   type: 'email',    field: 'email',    placeholder: 'tu@email.com' },
-                  { label: 'Contraseña',          icon: 'lock',    type: 'password', field: 'password', placeholder: 'Mínimo 6 caracteres' },
-                  { label: 'Confirmar contraseña',icon: 'lock',    type: 'password', field: 'confirm',  placeholder: 'Repite tu contraseña' },
-                ].map(({ label, icon, type, field, placeholder }) => (
-                  <div key={field}>
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
-                      <span className="material-icons" style={{ fontSize: '14px' }}>{icon}</span> {label}
-                    </label>
-                    <input type={type} value={regData[field]} onChange={e => setRegData({ ...regData, [field]: e.target.value })}
-                      placeholder={placeholder}
-                      className="w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] focus:bg-white transition-all text-gray-700"
-                      style={{ padding: '14px 16px' }} />
-                  </div>
-                ))}
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
+                    <span className="material-icons" style={{ fontSize: '14px' }}>person</span> Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    value={regData.name}
+                    onChange={(e) => setRegData({ ...regData, name: e.target.value })}
+                    placeholder="Juan Pérez"
+                    className={inputClass}
+                    style={{ padding: '14px 16px' }}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
+                    <span className="material-icons" style={{ fontSize: '14px' }}>email</span> Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={regData.email}
+                    onChange={(e) => setRegData({ ...regData, email: e.target.value })}
+                    placeholder="tu@email.com"
+                    className={inputClass}
+                    style={{ padding: '14px 16px' }}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
+                    <span className="material-icons" style={{ fontSize: '14px' }}>lock</span> Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={regData.password}
+                    onChange={(e) => setRegData({ ...regData, password: e.target.value })}
+                    onFocus={() => setPwFocus(true)}
+                    onBlur={() => setPwFocus(false)}
+                    placeholder="Mínimo 8 caracteres"
+                    className={inputClass}
+                    style={{ padding: '14px 16px' }}
+                  />
+                  {(pwFocus || regData.password) && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl space-y-1.5" style={{ marginTop: '10px', padding: '12px 14px' }}>
+                      {PASSWORD_RULES.map(({ id, label, test }) => {
+                        const ok = test(regData.password);
+                        return (
+                          <div key={id} className="flex items-center gap-2">
+                            <span
+                              className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
+                                ok ? 'bg-green-500' : 'bg-gray-200'
+                              }`}
+                            >
+                              <span className="material-icons text-white" style={{ fontSize: ok ? '12px' : '11px', color: ok ? '#fff' : '#9ca3af' }}>
+                                {ok ? 'check' : 'close'}
+                              </span>
+                            </span>
+                            <span className={`text-xs transition-colors ${ok ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                              {label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
+                    <span className="material-icons" style={{ fontSize: '14px' }}>lock</span> Confirmar contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={regData.confirm}
+                    onChange={(e) => setRegData({ ...regData, confirm: e.target.value })}
+                    placeholder="Repite tu contraseña"
+                    className={inputClass}
+                    style={{ padding: '14px 16px' }}
+                  />
+                </div>
+
                 <button type="submit" disabled={loading}
                   className="w-full bg-[#191281] hover:bg-[#16304f] disabled:opacity-60 text-white font-bold rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2"
                   style={{ padding: '16px', marginTop: '8px' }}>

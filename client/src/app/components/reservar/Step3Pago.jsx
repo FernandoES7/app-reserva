@@ -4,51 +4,40 @@ import { CreditCard, Lock } from 'lucide-react';
 const fmt = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`;
 
 const formatCard = (v) => v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-const formatExp  = (v) => {
+const formatExp = (v) => {
   const digits = v.replace(/\D/g, '').slice(0, 4);
-  return digits.length > 2 ? `${digits.slice(0,2)}/${digits.slice(2)}` : digits;
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
 };
 
-export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, cargando }) {
-  const [pago, setPago] = useState({
-    titular: '',
-    numero: '',
-    expiracion: '',
-    cvv: '',
-  });
+export function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, cargando }) {
+  const [pago, setPago] = useState({ titular: '', numero: '', expiracion: '', cvv: '' });
   const [errores, setErrores] = useState({});
 
   const update = (campo, valor) => {
-    setPago(p => ({ ...p, [campo]: valor }));
-    if (errores[campo]) setErrores(e => ({ ...e, [campo]: null }));
+    setPago((p) => ({ ...p, [campo]: valor }));
+    if (errores[campo]) setErrores((e) => ({ ...e, [campo]: null }));
   };
 
   const validar = () => {
     const e = {};
-    if (!pago.titular.trim())                   e.titular    = 'Nombre del titular requerido';
-    if (pago.numero.replace(/\s/g,'').length < 16) e.numero  = 'Número de tarjeta inválido';
+    if (!pago.titular.trim()) e.titular = 'Nombre del titular requerido';
+    if (pago.numero.replace(/\s/g, '').length < 16) e.numero = 'Número de tarjeta inválido';
     if (!/^\d{2}\/\d{2}$/.test(pago.expiracion)) e.expiracion = 'Formato MM/AA inválido';
-    if (pago.cvv.length < 3)                    e.cvv        = 'CVV inválido';
+    if (pago.cvv.length < 3) e.cvv = 'CVV inválido';
     setErrores(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleConfirmar = () => {
-    if (validar()) onConfirmar();
-  };
-
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#1e3a6e] mb-1">Información de pago</h2>
+      <h2 className="text-xl font-bold text-[#191281] mb-1">Información de pago</h2>
       <p className="text-sm text-gray-500 mb-6 flex items-center gap-1.5">
         <Lock size={13} />
-        Transacción segura y encriptada
+        Transacción simulada (sin cargo real)
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        {/* Formulario de pago */}
         <div className="md:col-span-3 space-y-4">
-          {/* Titular */}
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Nombre en la tarjeta *</label>
             <input
@@ -56,14 +45,13 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
               placeholder="JUAN PÉREZ"
               value={pago.titular}
               onChange={(e) => update('titular', e.target.value.toUpperCase())}
-              className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a6e] ${
+              className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] ${
                 errores.titular ? 'border-red-400' : 'border-gray-300'
               }`}
             />
             {errores.titular && <p className="text-xs text-red-500 mt-0.5">{errores.titular}</p>}
           </div>
 
-          {/* Número tarjeta */}
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Número de tarjeta *</label>
             <div className="relative">
@@ -73,7 +61,7 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
                 placeholder="0000 0000 0000 0000"
                 value={pago.numero}
                 onChange={(e) => update('numero', formatCard(e.target.value))}
-                className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a6e] font-mono ${
+                className={`w-full border rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] font-mono ${
                   errores.numero ? 'border-red-400' : 'border-gray-300'
                 }`}
               />
@@ -82,7 +70,6 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Expiración */}
             <div>
               <label className="text-xs font-medium text-gray-600 mb-1 block">Expiración *</label>
               <input
@@ -90,13 +77,12 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
                 placeholder="MM/AA"
                 value={pago.expiracion}
                 onChange={(e) => update('expiracion', formatExp(e.target.value))}
-                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a6e] font-mono ${
+                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] font-mono ${
                   errores.expiracion ? 'border-red-400' : 'border-gray-300'
                 }`}
               />
               {errores.expiracion && <p className="text-xs text-red-500 mt-0.5">{errores.expiracion}</p>}
             </div>
-            {/* CVV */}
             <div>
               <label className="text-xs font-medium text-gray-600 mb-1 block">CVV *</label>
               <input
@@ -104,30 +90,20 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
                 placeholder="•••"
                 maxLength={4}
                 value={pago.cvv}
-                onChange={(e) => update('cvv', e.target.value.replace(/\D/g,'').slice(0,4))}
-                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a6e] font-mono ${
+                onChange={(e) => update('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] font-mono ${
                   errores.cvv ? 'border-red-400' : 'border-gray-300'
                 }`}
               />
               {errores.cvv && <p className="text-xs text-red-500 mt-0.5">{errores.cvv}</p>}
             </div>
           </div>
-
-          {/* Aceptar tarjetas */}
-          <div className="flex gap-2">
-            {['VISA','MC','AMEX','Diners'].map(card => (
-              <span key={card} className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded font-medium">
-                {card}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {/* Resumen de la reserva */}
         <div className="md:col-span-2">
-          <div className="bg-[#f0f4ff] border border-[#c7d6f0] rounded-xl p-4 space-y-3">
-            <p className="font-semibold text-[#1e3a6e] text-sm">Resumen de reserva</p>
-            <hr className="border-[#c7d6f0]" />
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3">
+            <p className="font-semibold text-[#191281] text-sm">Resumen de reserva</p>
+            <hr className="border-indigo-100" />
             <div className="text-sm space-y-1.5">
               <div className="flex justify-between text-gray-600">
                 <span>Check-in</span>
@@ -142,18 +118,18 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
                 <span className="font-medium text-gray-800">{datos.huespedes}</span>
               </div>
             </div>
-            <hr className="border-[#c7d6f0]" />
+            <hr className="border-indigo-100" />
             <div className="flex justify-between items-baseline">
-              <span className="text-sm font-semibold text-[#1e3a6e]">Total</span>
-              <span className="text-xl font-bold text-[#1e3a6e]">{fmt(totalPagar)}</span>
+              <span className="text-sm font-semibold text-[#191281]">Total</span>
+              <span className="text-xl font-bold text-[#191281]">{fmt(totalPagar)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navegación */}
       <div className="flex justify-between mt-8 pt-4 border-t border-gray-200">
         <button
+          type="button"
           onClick={onAnterior}
           disabled={cargando}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -161,9 +137,10 @@ export default function Step3Pago({ datos, totalPagar, onConfirmar, onAnterior, 
           ‹ Anterior
         </button>
         <button
-          onClick={handleConfirmar}
+          type="button"
+          onClick={() => validar() && onConfirmar()}
           disabled={cargando}
-          className="flex items-center gap-2 bg-[#1e3a6e] hover:bg-[#162d56] disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
+          className="flex items-center gap-2 bg-[#191281] hover:bg-[#16304f] disabled:opacity-60 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
         >
           {cargando ? (
             <>

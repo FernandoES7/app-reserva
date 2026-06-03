@@ -3,13 +3,13 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
 // Crear usuario nuevo
-export const crear = async ({ nombre, apellido, email, password }) => {
+export const crear = async ({ nombre, email, password }) => {
   const password_hash = await bcrypt.hash(password, 10);
   const [result] = await pool.query(
-    'INSERT INTO usuarios (nombre, apellido, email, password_hash) VALUES (?,?,?,?)',
-    [nombre, apellido, email, password_hash]
+    'INSERT INTO usuarios (nombre, email, password_hash) VALUES (?,?,?)',
+    [nombre, email, password_hash]
   );
-  const [rows] = await pool.query('SELECT id, nombre, apellido, email, rol FROM usuarios WHERE id = ?', [result.insertId]);
+  const [rows] = await pool.query('SELECT id, nombre, email, rol FROM usuarios WHERE id = ?', [result.insertId]);
   return rows[0];
 };
 

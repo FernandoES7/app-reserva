@@ -11,7 +11,7 @@ const Field = ({ label, icon: Icon, error, ...props }) => (
         </div>
       )}
       <input
-        className={`w-full border rounded-lg py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a6e] transition-colors ${
+        className={`w-full border rounded-lg py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#191281] transition-colors ${
           Icon ? 'pl-9 pr-3' : 'px-3'
         } ${error ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
         {...props}
@@ -21,37 +21,31 @@ const Field = ({ label, icon: Icon, error, ...props }) => (
   </div>
 );
 
-export default function Step2DatosPersonales({ datos, onDatosChange, onSiguiente, onAnterior }) {
+export function Step2DatosPersonales({ datos, onDatosChange, onSiguiente, onAnterior }) {
   const { cliente } = datos;
   const [errores, setErrores] = useState({});
 
   const update = (campo, valor) => {
     onDatosChange({ cliente: { ...cliente, [campo]: valor } });
-    if (errores[campo]) setErrores(e => ({ ...e, [campo]: null }));
+    if (errores[campo]) setErrores((e) => ({ ...e, [campo]: null }));
   };
 
   const validar = () => {
     const e = {};
-    if (!cliente.nombre?.trim())   e.nombre   = 'El nombre es requerido';
-    if (!cliente.apellido?.trim()) e.apellido  = 'El apellido es requerido';
-    if (!cliente.email?.trim())    e.email     = 'El email es requerido';
+    if (!cliente.nombre?.trim()) e.nombre = 'El nombre es requerido';
+    if (!cliente.apellido?.trim()) e.apellido = 'El apellido es requerido';
+    if (!cliente.email?.trim()) e.email = 'El email es requerido';
     else if (!/\S+@\S+\.\S+/.test(cliente.email)) e.email = 'Email inválido';
-    if (!cliente.telefono?.trim()) e.telefono  = 'El teléfono es requerido';
-    if (!cliente.dni?.trim())      e.dni       = 'El DNI es requerido';
+    if (!cliente.telefono?.trim()) e.telefono = 'El teléfono es requerido';
+    if (!cliente.dni?.trim()) e.dni = 'El DNI es requerido';
     setErrores(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSiguiente = () => {
-    if (validar()) onSiguiente();
-  };
-
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#1e3a6e] mb-1">Datos personales</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Completa tus datos para procesar la reserva
-      </p>
+      <h2 className="text-xl font-bold text-[#191281] mb-1">Datos personales</h2>
+      <p className="text-sm text-gray-500 mb-6">Completa tus datos para procesar la reserva</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
         <Field
@@ -100,7 +94,6 @@ export default function Step2DatosPersonales({ datos, onDatosChange, onSiguiente
         />
       </div>
 
-      {/* Resumen mini */}
       <div className="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4 max-w-2xl">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tu reserva</p>
         <div className="text-sm text-gray-700 space-y-1">
@@ -109,17 +102,18 @@ export default function Step2DatosPersonales({ datos, onDatosChange, onSiguiente
         </div>
       </div>
 
-      {/* Navegación */}
       <div className="flex justify-between mt-8 pt-4 border-t border-gray-200">
         <button
+          type="button"
           onClick={onAnterior}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
           ‹ Anterior
         </button>
         <button
-          onClick={handleSiguiente}
-          className="flex items-center gap-2 bg-[#1e3a6e] hover:bg-[#162d56] text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
+          type="button"
+          onClick={() => validar() && onSiguiente()}
+          className="flex items-center gap-2 bg-[#191281] hover:bg-[#16304f] text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
         >
           Siguiente ›
         </button>

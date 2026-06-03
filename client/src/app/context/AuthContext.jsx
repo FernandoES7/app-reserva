@@ -1,6 +1,25 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
+
+function mapUsuario(usuario, token) {
+  return {
+    id: usuario.id,
+    name: usuario.nombre,
+    email: usuario.email,
+    role: usuario.rol === 'admin' ? 'admin' : 'customer',
+    token,
+  };
+}
+
+function persistSession(usuario, token, setUser) {
+  const sessionUser = mapUsuario(usuario, token);
+  localStorage.setItem('hostal_user', JSON.stringify(sessionUser));
+  localStorage.setItem('hostal_token', token);
+  setUser(sessionUser);
+  return sessionUser;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
@@ -17,30 +36,24 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const savedUser = localStorage.getItem('hostal_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('hostal_user');
+        localStorage.removeItem('hostal_token');
+      }
     }
-    setLoading(false); 
+    setLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    const inputEmail = typeof email === 'object' ? email.email : email;
-    const inputPassword = typeof email === 'object' ? email.password : password;
+    const res = await authAPI.login(email, password);
+    return persistSession(res.data.usuario, res.data.token, setUser);
+  };
 
-    if (inputEmail === 'admin@hostal.com' && inputPassword === 'admin123') {
-      const mockUser = {
-        name: 'Administrador José Luis',
-        email: 'admin@hostal.com',
-        role: 'admin',
-        token: 'mock-jwt-token-for-f5'
-      };
-      
-      localStorage.setItem('hostal_user', JSON.stringify(mockUser));
-      localStorage.setItem('hostal_token', mockUser.token);
-      setUser(mockUser);
-      return mockUser; 
-    } else {
-      throw new Error('Credenciales incorrectas');
-    }
+  const register = async (nombre, email, password) => {
+    const res = await authAPI.register(nombre, email, password);
+    return persistSession(res.data.usuario, res.data.token, setUser);
   };
 
   const logout = () => {
@@ -50,14 +63,17 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      login, 
-      logout,
-      isAuthenticated: !!user, 
-      isAdmin: user?.role === 'admin'
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+        isAdmin: user?.role === 'admin',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

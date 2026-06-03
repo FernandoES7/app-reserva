@@ -1,10 +1,20 @@
 const BASE = '/api';
 
+function authHeaders() {
+  const token = localStorage.getItem('hostal_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request(path, options = {}) {
+  const { headers: extraHeaders, ...rest } = options;
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    ...options,
+    ...rest,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+      ...extraHeaders,
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || 'Error en la solicitud');
@@ -12,16 +22,26 @@ async function request(path, options = {}) {
 }
 
 export const authAPI = {
-  login: (email, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (name, email, password) => request('/auth/register', { method: 'POST', body: JSON.stringify({ name, email, password }) }),
-  logout: () => request('/auth/logout', { method: 'POST' }),
-  me: () => request('/auth/me'),
+  login: (email, password) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (nombre, email, password) =>
+    request('/auth/register', { method: 'POST', body: JSON.stringify({ nombre, email, password }) }),
+};
+
+export const habitacionesAPI = {
+  getDisponibles: (checkin, checkout) => {
+    const params = new URLSearchParams({ checkin, checkout });
+    return request(`/habitaciones/disponibles?${params}`);
+  },
+  getTipos: () => request('/habitaciones/tipos'),
 };
 
 export const roomsAPI = {
   getAll: (filters = {}) => {
-    const params = new URLSearchParams(Object.fromEntries(Object.entries(filters).filter(([,v]) => v))).toString();
-    return request(`/rooms${params ? '?' + params : ''}`);
+    const params = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
+    ).toString();
+    return request(`/rooms${params ? `?${params}` : ''}`);
   },
   getById: (id) => request(`/rooms/${id}`),
   create: (data) => request('/rooms', { method: 'POST', body: JSON.stringify(data) }),
@@ -30,12 +50,15 @@ export const roomsAPI = {
 };
 
 export const reservasAPI = {
+  create: (payload) =>
+    request('/reservas', { method: 'POST', body: JSON.stringify(payload) }),
+  getByCodigo: (codigo) => request(`/reservas/${codigo}`),
   getAll: () => request('/reservations'),
   getMias: () => request('/reservations/mine'),
   getById: (id) => request(`/reservations/${id}`),
-  create: (data) => request('/reservations', { method: 'POST', body: JSON.stringify(data) }),
   cancel: (id) => request(`/reservations/${id}/cancel`, { method: 'PUT' }),
-  updateStatus: (id, status) => request(`/reservations/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  updateStatus: (id, status) =>
+    request(`/reservations/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
 };
 
 export const usersAPI = {

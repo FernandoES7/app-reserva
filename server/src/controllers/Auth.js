@@ -9,21 +9,20 @@ const generarToken = (usuario) =>
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+const PASSWORD_MSG =
+  'La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial';
+
 // POST /api/auth/register
 export const register = async (req, res) => {
-  const { nombre, apellido, email, password } = req.body;
+  const { nombre, email, password } = req.body;
 
-  if (!nombre || !apellido || !email || !password) {
-    return res.status(400).json({ ok: false, message: 'Todos los campos son requeridos' });
+  if (!nombre || !email || !password) {
+    return res.status(400).json({ ok: false, message: 'Nombre, email y contraseña son requeridos' });
   }
 
-  // Validar contraseña en el backend también
-  const pwRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-  if (!pwRegex.test(password)) {
-    return res.status(400).json({
-      ok: false,
-      message: 'La contraseña no cumple los requisitos de seguridad'
-    });
+  if (!PASSWORD_REGEX.test(password)) {
+    return res.status(400).json({ ok: false, message: PASSWORD_MSG });
   }
 
   try {
@@ -32,7 +31,7 @@ export const register = async (req, res) => {
       return res.status(409).json({ ok: false, message: 'Este correo ya está registrado' });
     }
 
-    const usuario = await UsuarioModel.crear({ nombre, apellido, email, password });
+    const usuario = await UsuarioModel.crear({ nombre, email, password });
     const token   = generarToken(usuario);
 
     res.status(201).json({ ok: true, data: { usuario, token } });
