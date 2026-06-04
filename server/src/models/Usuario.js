@@ -19,6 +19,38 @@ export const findByEmail = async (email) => {
   return rows[0] || null;
 };
 
+export const findByEmailAny = async (email) => {
+  const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+  return rows[0] || null;
+};
+
+export const promoverAdmin = async ({ nombre, email }) => {
+  const existente = await findByEmailAny(email);
+
+  if (existente) {
+    await pool.query(
+      'UPDATE usuarios SET rol = ?, activo = TRUE WHERE id = ?',
+      ['admin', existente.id]
+    );
+    const [rows] = await pool.query(
+      'SELECT id, nombre, email, rol FROM usuarios WHERE id = ?',
+      [existente.id]
+    );
+    return rows[0];
+  }
+
+  const password_hash = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
+  const [result] = await pool.query(
+    'INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (?,?,?,?)',
+    [nombre, email, password_hash, 'admin']
+  );
+  const [rows] = await pool.query(
+    'SELECT id, nombre, email, rol FROM usuarios WHERE id = ?',
+    [result.insertId]
+  );
+  return rows[0];
+};
+
 // Verificar contraseña
 export const verificarPassword = (password, hash) => bcrypt.compare(password, hash);
 

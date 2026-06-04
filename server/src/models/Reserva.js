@@ -82,3 +82,53 @@ export const getByCodigo = async (codigo) => {
 
   return { ...reserva, habitaciones };
 };
+
+const SELECT_LISTADO = `
+  SELECT
+    r.id,
+    r.codigo_reserva,
+    r.fecha_checkin,
+    r.fecha_checkout,
+    r.num_huespedes,
+    r.total,
+    r.estado,
+    r.created_at,
+    c.nombre   AS cliente_nombre,
+    c.apellido AS cliente_apellido,
+    c.email    AS cliente_email,
+    GROUP_CONCAT(DISTINCT CONCAT(th.nombre, ' ', h.numero) ORDER BY h.numero SEPARATOR ', ') AS habitaciones
+  FROM reservas r
+  JOIN clientes c ON c.id = r.cliente_id
+  LEFT JOIN reserva_habitaciones rh ON rh.reserva_id = r.id
+  LEFT JOIN habitaciones h ON h.id = rh.habitacion_id
+  LEFT JOIN tipo_habitaciones th ON th.id = h.tipo_id
+`;
+
+export const getAll = async () => {
+  const [rows] = await pool.query(
+    `${SELECT_LISTADO}
+     GROUP BY r.id
+     ORDER BY r.created_at DESC`
+  );
+  return rows;
+};
+
+export const getByClienteEmail = async (email) => {
+  const [rows] = await pool.query(
+    `${SELECT_LISTADO}
+     WHERE c.email = ?
+     GROUP BY r.id
+     ORDER BY r.created_at DESC`,
+    [email]
+  );
+  return rows;
+};
+
+export const updateEstado = async (id, estado) => {
+  const [result] = await pool.query(
+    'UPDATE reservas SET estado = ? WHERE id = ?',
+    [estado, id]
+  );
+  if (result.affectedRows === 0) return null;
+  return getById(id);
+};

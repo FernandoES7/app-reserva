@@ -2,8 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import pool from './database/connection.js';
 import habitacionRoutes from './routes/Habitacion.js';
-import reservaRoutes    from './routes/Reserva.js';
-import authRoutes       from './routes/Auth.js';        // ← nuevo
+import reservaRoutes       from './routes/Reserva.js';
+import reservationRoutes   from './routes/Reservation.js';
+import roomRoutes          from './routes/Room.js';
+import userRoutes          from './routes/User.js';
+import authRoutes          from './routes/Auth.js';
 
 const app = express();
 
@@ -25,7 +28,10 @@ app.get('/test-db', async (_req, res) => {
 // ── Rutas de la API ────────────────────────────────────
 app.use('/api/auth',         authRoutes);           // ← nuevo
 app.use('/api/habitaciones', habitacionRoutes);
-app.use('/api/reservas',     reservaRoutes);
+app.use('/api/reservas',      reservaRoutes);
+app.use('/api/reservations',  reservationRoutes);
+app.use('/api/rooms',         roomRoutes);
+app.use('/api/users',         userRoutes);
 
 // ── 404 ───────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ ok: false, message: 'Ruta no encontrada' }));

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { statsAPI, reservasAPI } from '../../services/api';
+import { AdminPage } from '../../components/admin/AdminPage';
 
 const STATUS = {
   confirmada: { bg:'#dcfce7', color:'#16a34a' },
@@ -27,10 +28,10 @@ export function AdminDashboard() {
   }, []);
 
   const tarjetas = [
-    { label:'Total Reservas',     value: stats.totalReservas    ?? '—', icon:'event_available', bg:'#eff6ff', color:'#1e3a5f', change:'+12%' },
-    { label:'Habitaciones Activas',value: stats.habitacionesActivas ?? '—', icon:'hotel',       bg:'#f0fdf4', color:'#16a34a', change:'100%' },
-    { label:'Huéspedes este mes',  value: stats.huespedesMes    ?? '—', icon:'groups',          bg:'#faf5ff', color:'#7c3aed', change:'+8%' },
-    { label:'Ingresos del mes',    value: stats.ingresosMes ? `S/ ${Number(stats.ingresosMes).toLocaleString()}` : '—', icon:'payments', bg:'#fffbeb', color:'#d97706', change:'+15%' },
+    { label:'Total Reservas',      value: stats.totalReservas    ?? '—', icon:'event_available', bg:'#eff6ff', color:'#1e3a5f', change:'+12%' },
+    { label:'Habitaciones Activas', value: stats.habitacionesActivas ?? '—', icon:'hotel', bg:'#f0fdf4', color:'#16a34a', change:'100%' },
+    { label:'Huéspedes este mes',   value: stats.huespedesMes    ?? '—', icon:'groups', bg:'#faf5ff', color:'#7c3aed', change:'+8%' },
+    { label:'Ingresos del mes',     value: stats.ingresosMes ? `S/ ${Number(stats.ingresosMes).toLocaleString()}` : '—', icon:'payments', bg:'#fffbeb', color:'#d97706', change:'+15%' },
   ];
 
   const mensual = stats.mensual || [
@@ -38,89 +39,88 @@ export function AdminDashboard() {
     { mes:'Abr', pct:75 },{ mes:'May', pct:85 },{ mes:'Jun', pct:90 },
   ];
 
-  if (loading) return (
-    <div className="flex items-center justify-center" style={{ height: '320px', paddingLeft: '280px' }}>
-      <div className="w-10 h-10 border-4 border-[#1e3a5f] border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', padding: '32px 32px 32px 280px', width: '100%', boxSizing: 'border-box' }}>
-
+    <AdminPage loading={loading}>
       <div>
-        <h1 className="font-black text-[#1e3a5f] tracking-wide" style={{ fontSize: '28px', marginBottom: '6px' }}>Dashboard</h1>
+        <h1 className="text-2xl sm:text-[28px] font-black text-[#1e3a5f] tracking-wide mb-1">Dashboard</h1>
         <p className="text-gray-400 text-sm">Resumen general del hostal</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" style={{ width: '100%' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {tarjetas.map((t, i) => (
           <motion.div key={i} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay: i*0.08 }}>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm" style={{ padding: '24px' }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: t.bg }}>
-                  <span className="material-icons" style={{ fontSize: '22px', color: t.color }}>{t.icon}</span>
+                  <span className="material-icons text-[22px]" style={{ color: t.color }}>{t.icon}</span>
                 </div>
                 <span className="text-xs font-bold text-green-500 flex items-center gap-0.5">
-                  <span className="material-icons" style={{ fontSize: '14px' }}>trending_up</span>{t.change}
+                  <span className="material-icons text-sm">trending_up</span>{t.change}
                 </span>
               </div>
-              <p className="font-black text-[#1e3a5f] tracking-wide" style={{ fontSize: '26px', marginBottom: '4px' }}>{t.value}</p>
+              <p className="text-xl sm:text-[26px] font-black text-[#1e3a5f] tracking-wide mb-1">{t.value}</p>
               <p className="text-gray-400 text-xs">{t.label}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ width: '100%' }}>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm" style={{ padding: '32px' }}>
-          <div className="flex items-center gap-2" style={{ marginBottom: '28px' }}>
-            <span className="material-icons text-[#1e3a5f]" style={{ fontSize: '20px' }}>bar_chart</span>
-            <h2 className="font-black text-[#1e3a5f] tracking-wide">Ocupación mensual</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-8">
+          <div className="flex items-center gap-2 mb-6 sm:mb-7">
+            <span className="material-icons text-[#1e3a5f] text-xl">bar_chart</span>
+            <h2 className="font-black text-[#1e3a5f] tracking-wide text-lg sm:text-xl">Ocupación mensual</h2>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
             {mensual.map(s => (
               <div key={s.mes}>
-                <div className="flex justify-between text-sm" style={{ marginBottom: '6px' }}>
+                <div className="flex justify-between text-sm mb-1.5">
                   <span className="font-bold text-gray-600">{s.mes}</span>
                   <span className="font-black text-[#1e3a5f]">{s.pct}%</span>
                 </div>
-                <div className="rounded-full overflow-hidden" style={{ height: '8px', background: '#f3f4f6' }}>
-                  <div className="h-full rounded-full transition-all" style={{ width: `${s.pct}%`, background: '#1e3a5f' }} />
+                <div className="h-2 rounded-full overflow-hidden bg-gray-100">
+                  <div className="h-full rounded-full transition-all bg-[#1e3a5f]" style={{ width: `${s.pct}%` }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm" style={{ padding: '32px' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: '28px' }}>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-7">
             <div className="flex items-center gap-2">
-              <span className="material-icons text-[#1e3a5f]" style={{ fontSize: '20px' }}>receipt_long</span>
-              <h2 className="font-black text-[#1e3a5f] tracking-wide">Reservas recientes</h2>
+              <span className="material-icons text-[#1e3a5f] text-xl">receipt_long</span>
+              <h2 className="font-black text-[#1e3a5f] tracking-wide text-lg sm:text-xl">Reservas recientes</h2>
             </div>
-            <button onClick={() => navigate('/admin/reservas')}
-              className="text-xs font-bold text-[#1e3a5f] hover:underline">Ver todas</button>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/reservas')}
+              className="text-xs font-bold text-[#1e3a5f] hover:underline text-left sm:text-right"
+            >
+              Ver todas
+            </button>
           </div>
           {recientes.length === 0 ? (
-            <div className="text-center" style={{ padding: '40px 0' }}>
-              <span className="material-icons text-gray-200" style={{ fontSize: '48px' }}>event_busy</span>
-              <p className="text-gray-300 text-sm" style={{ marginTop: '12px' }}>No hay reservas aún</p>
+            <div className="text-center py-10">
+              <span className="material-icons text-gray-200 text-5xl">event_busy</span>
+              <p className="text-gray-300 text-sm mt-3">No hay reservas aún</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <div className="flex flex-col gap-4">
               {recientes.map((r, i) => {
                 const st = STATUS[r.estado || r.status] || STATUS.pendiente;
                 return (
-                  <div key={r.id || i} className="flex items-center justify-between border-b border-gray-50 last:border-0"
-                    style={{ paddingBottom: '16px', marginBottom: '16px' }}>
-                    <div>
-                      <p className="font-bold text-[#1e3a5f] text-sm">{r.nombre_cliente || r.customerName}</p>
-                      <p className="text-xs text-gray-400" style={{ marginTop: '2px' }}>{r.habitacion_nombre || r.roomName}</p>
+                  <div
+                    key={r.id || i}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-bold text-[#1e3a5f] text-sm truncate">{r.nombre_cliente || r.customerName}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{r.habitacion_nombre || r.roomName}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 shrink-0">
                       <p className="font-black text-[#1e3a5f] text-sm">S/ {r.total || r.totalPrice}</p>
-                      <span className="text-xs font-bold rounded-full" style={{ padding: '2px 10px', background: st.bg, color: st.color }}>
+                      <span className="text-xs font-bold rounded-full px-2.5 py-0.5" style={{ background: st.bg, color: st.color }}>
                         {r.estado || r.status}
                       </span>
                     </div>
@@ -130,8 +130,7 @@ export function AdminDashboard() {
             </div>
           )}
         </div>
-
       </div>
-    </div>
+    </AdminPage>
   );
 }

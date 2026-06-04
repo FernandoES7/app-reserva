@@ -37,3 +37,69 @@ export const getDisponibles = async (checkin, checkout) => {
   const [rows] = await pool.query(sql, [checkout, checkin]);
   return rows;
 };
+
+export const getAllCatalog = async ({ soloActivos = true } = {}) => {
+  const where = soloActivos ? 'WHERE activo = TRUE' : '';
+  const [rows] = await pool.query(
+    `SELECT * FROM tipo_habitaciones ${where} ORDER BY precio_noche ASC`
+  );
+  return rows;
+};
+
+export const getById = async (id) => {
+  const [rows] = await pool.query('SELECT * FROM tipo_habitaciones WHERE id = ?', [id]);
+  return rows[0] || null;
+};
+
+export const crear = async ({ nombre, descripcion, capacidad, precio_noche, imagen_url, activo, cantidad_total }) => {
+  const [result] = await pool.query(
+    `INSERT INTO tipo_habitaciones
+       (nombre, descripcion, capacidad, precio_noche, imagen_url, cantidad_total, activo)
+     VALUES (?,?,?,?,?,?,?)`,
+    [
+      nombre,
+      descripcion || null,
+      capacidad ?? 1,
+      precio_noche,
+      imagen_url || null,
+      cantidad_total ?? 1,
+      activo !== false,
+    ]
+  );
+  return getById(result.insertId);
+};
+
+export const actualizar = async (id, datos) => {
+  const actual = await getById(id);
+  if (!actual) return null;
+
+  const [result] = await pool.query(
+    `UPDATE tipo_habitaciones SET
+       nombre = ?,
+       descripcion = ?,
+       capacidad = ?,
+       precio_noche = ?,
+       imagen_url = ?,
+       activo = ?
+     WHERE id = ?`,
+    [
+      datos.nombre ?? actual.nombre,
+      datos.descripcion ?? actual.descripcion,
+      datos.capacidad ?? actual.capacidad,
+      datos.precio_noche ?? actual.precio_noche,
+      datos.imagen_url ?? actual.imagen_url,
+      datos.activo ?? actual.activo,
+      id,
+    ]
+  );
+  if (result.affectedRows === 0) return null;
+  return getById(id);
+};
+
+export const eliminar = async (id) => {
+  const [result] = await pool.query(
+    'UPDATE tipo_habitaciones SET activo = FALSE WHERE id = ?',
+    [id]
+  );
+  return result.affectedRows > 0;
+};
