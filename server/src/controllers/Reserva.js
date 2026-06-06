@@ -1,6 +1,7 @@
 import * as ClienteModel  from '../models/Cliente.js';
 import * as HabitacionModel from '../models/Habitacion.js';
 import * as ReservaModel   from '../models/Reserva.js';
+import * as CancelacionModel from '../models/Cancelacion.js';
 
 /*
   POST /api/reservas
@@ -16,7 +17,7 @@ import * as ReservaModel   from '../models/Reserva.js';
     ]
   }
 */
-export const crear = async (req, res) => {
+export const crearReserva = async (req, res) => {
   const { cliente: datosCliente, checkin, checkout, numHuespedes, seleccion } = req.body;
 
   if (!datosCliente?.email || !checkin || !checkout || !seleccion?.length) {
@@ -91,19 +92,19 @@ const formatFecha = (fecha) => {
 };
 
 const formatReservaListado = (row) => ({
-  id: row.id,
+  id: row.id ?? row.id_reserva,
   codigo: row.codigo_reserva,
-  nombre_cliente: `${row.cliente_nombre || ''} ${row.cliente_apellido || ''}`.trim(),
+  nombre_cliente: `${row.cliente_nombre || row.cliente || ''} ${row.cliente_apellido || ''}`.trim(),
   email_cliente: row.cliente_email,
-  habitacion_nombre: row.habitaciones || '—',
+  habitacion_nombre: row.habitaciones || null,
   check_in: formatFecha(row.fecha_checkin),
   check_out: formatFecha(row.fecha_checkout),
   huespedes: row.num_huespedes,
-  total: Number(row.total),
+  total: Number(row.total ?? 0),
   estado: row.estado,
 });
 
-export const listar = async (_req, res) => {
+export const listarReservas = async (_req, res) => {
   try {
     const rows = await ReservaModel.getAll();
     res.json({ ok: true, reservations: rows.map(formatReservaListado) });
@@ -113,7 +114,7 @@ export const listar = async (_req, res) => {
   }
 };
 
-export const listarMias = async (req, res) => {
+export const obtenerMisReservas = async (req, res) => {
   try {
     const rows = await ReservaModel.getByClienteEmail(req.usuario.email);
     res.json({ ok: true, reservations: rows.map(formatReservaListado) });
@@ -123,7 +124,7 @@ export const listarMias = async (req, res) => {
   }
 };
 
-export const getById = async (req, res) => {
+export const obtenerReserva = async (req, res) => {
   try {
     const reserva = await ReservaModel.getById(req.params.id);
     if (!reserva) {
@@ -167,4 +168,52 @@ export const cancelar = async (req, res) => {
     console.error(error);
     res.status(500).json({ ok: false, message: 'Error al cancelar reserva', error: error.message });
   }
+};
+
+export const cancelarReserva = async (req, res) => {
+  try {
+    const { motivo } = req.body;
+    const idReserva = Number(req.params.id);
+
+    const reserva = await ReservaModel.getById(idReserva);
+    if (!reserva) {
+      return res.status(404).json({ ok: false, message: 'Reserva no encontrada' });
+    }
+
+    if (req.usuario.tipo === 'cliente' && reserva.email !== req.usuario.email) {
+      return res.status(403).json({ ok: false, message: 'No autorizado para cancelar esta reserva' });
+    }
+
+    const idEmpleado = req.usuario.tipo === 'empleado' ? req.usuario.id : null;
+    const motivoFinal =
+      motivo?.trim() ||
+      (req.usuario.tipo === 'cliente' ? 'Cancelada por el cliente' : 'Cancelada por el personal');
+
+    await CancelacionModel.crear({
+      idReserva,
+      motivo: motivoFinal,
+      idEmpleado,
+    });
+
+    res.json({
+      ok: true,
+      message: 'Reserva cancelada correctamente',
+    });
+  } catch (error) {
+    console.error(error);
+
+    const status = error.message.includes('ya') ? 409 : 500;
+    res.status(status).json({
+      ok: false,
+      message: error.message || 'Error al cancelar la reserva',
+    });
+  }
+};
+
+export const registrarCheckin = async (req, res) => {
+
+};
+
+export const registrarCheckout = async (req, res) => {
+
 };

@@ -24,8 +24,12 @@ async function request(path, options = {}) {
 export const authAPI = {
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (nombre, email, password) =>
-    request('/auth/register', { method: 'POST', body: JSON.stringify({ nombre, email, password }) }),
+  register: (nombre, email, password, documento) =>
+    request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ nombre, email, password, documento }),
+    }),
+  me: () => request('/auth/me'),
 };
 
 export const habitacionesAPI = {
@@ -34,37 +38,46 @@ export const habitacionesAPI = {
     return request(`/habitaciones/disponibles?${params}`);
   },
   getTipos: () => request('/habitaciones/tipos'),
-};
-
-export const roomsAPI = {
-  getAll: (filters = {}) => {
-    const params = new URLSearchParams(
-      Object.fromEntries(Object.entries(filters).filter(([, v]) => v))
-    ).toString();
-    return request(`/rooms${params ? `?${params}` : ''}`);
-  },
-  getById: (id) => request(`/rooms/${id}`),
-  create: (data) => request('/rooms', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id, data) => request(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => request(`/rooms/${id}`, { method: 'DELETE' }),
+  getTiposAdmin: () => request('/habitaciones/tipos/admin'),
+  createTipo: (data) =>
+    request('/habitaciones/tipos', { method: 'POST', body: JSON.stringify(data) }),
+  updateTipo: (id, data) =>
+    request(`/habitaciones/tipos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteTipo: (id) => request(`/habitaciones/tipos/${id}`, { method: 'DELETE' }),
 };
 
 export const reservasAPI = {
   create: (payload) =>
     request('/reservas', { method: 'POST', body: JSON.stringify(payload) }),
   getByCodigo: (codigo) => request(`/reservas/${codigo}`),
-  getAll: () => request('/reservations'),
-  getMias: () => request('/reservations/mine'),
-  getById: (id) => request(`/reservations/${id}`),
-  cancel: (id) => request(`/reservations/${id}/cancel`, { method: 'PUT' }),
+  getAll: () => request('/reservas'),
+  getMias: () => request('/reservas/mis'),
+  getById: (id) => request(`/reservas/${id}`),
+  cancel: (id, motivo) =>
+    request(`/reservas/${id}/cancelar`, {
+      method: 'PUT',
+      body: JSON.stringify({ motivo }),
+    }),
   updateStatus: (id, status) =>
-    request(`/reservations/${id}`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    request(`/reservas/${id}/estado`, { method: 'PUT', body: JSON.stringify({ status }) }),
 };
 
-export const usersAPI = {
-  getAll: () => request('/users'),
-  update: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  delete: (id) => request(`/users/${id}`, { method: 'DELETE' }),
+export const clientesAPI = {
+  getAll: () => request('/clientes'),
+};
+
+export const empleadosAPI = {
+  getAll: () => request('/empleados'),
+  promover: (clienteId, rol = 'admin') =>
+    request(`/empleados/promover/${clienteId}`, {
+      method: 'POST',
+      body: JSON.stringify({ rol }),
+    }),
+  updateEstado: (id, estado) =>
+    request(`/empleados/${id}/estado`, {
+      method: 'PUT',
+      body: JSON.stringify({ estado }),
+    }),
 };
 
 export const statsAPI = {

@@ -1,45 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { roomsAPI } from '../../services/api';
+import { habitacionesAPI } from '../../services/api';
+import { mapTiposHabitacion, mapFormToTipo } from '../../utils/mapTipoHabitacion';
 import { AdminPage, AdminPageHeader } from '../../components/admin/AdminPage';
 
-const EMPTY = { nombre:'', tipo:'simple', precio:'', capacidad:1, descripcion:'', imagen:'', disponible:true };
+const EMPTY = {
+  nombre: '',
+  tipo: 'simple',
+  precio: '',
+  capacidad: 1,
+  cantidad_total: 1,
+  descripcion: '',
+  imagen: '',
+  disponible: true,
+};
 
 export function AdminHabitaciones() {
-  const [rooms,   setRooms]   = useState([]);
+  const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal,   setModal]   = useState(null);
-  const [form,    setForm]    = useState(EMPTY);
-  const [saving,  setSaving]  = useState(false);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(EMPTY);
+  const [saving, setSaving] = useState(false);
 
   const cargar = () => {
     setLoading(true);
-    roomsAPI.getAll().then(d => setRooms(d.rooms || [])).catch(console.error).finally(() => setLoading(false));
+    habitacionesAPI
+      .getTiposAdmin()
+      .then((d) => setRooms(mapTiposHabitacion(d.data)))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   };
+
   useEffect(cargar, []);
 
   const guardar = async (e) => {
     e.preventDefault();
-    if (!form.nombre || !form.tipo || !form.precio) return;
+    if (!form.nombre || !form.precio) return;
     try {
       setSaving(true);
-      modal === 'new' ? await roomsAPI.create(form) : await roomsAPI.update(form.id, form);
+      const payload = mapFormToTipo(form);
+      if (modal === 'new') {
+        await habitacionesAPI.createTipo(payload);
+      } else {
+        await habitacionesAPI.updateTipo(form.id, payload);
+      }
       setModal(null);
       cargar();
-    } catch (err) { console.error(err); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const eliminar = async (id) => {
-    if (!window.confirm('¿Eliminar esta habitación?')) return;
-    try { await roomsAPI.delete(id); cargar(); } catch (err) { console.error(err); }
+    if (!window.confirm('¿Desactivar este tipo de habitación?')) return;
+    try {
+      await habitacionesAPI.deleteTipo(id);
+      cargar();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <AdminPage loading={loading}>
       <AdminPageHeader
         title="Habitaciones"
-        subtitle={`${rooms.length} habitaciones registradas`}
+        subtitle={`${rooms.length} tipos de habitación registrados`}
         action={
           <button
             type="button"
@@ -54,7 +82,7 @@ export function AdminHabitaciones() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
         {rooms.map((room, i) => (
-          <motion.div key={room.id} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay: i*0.04 }}>
+          <motion.div key={room.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all">
               <div className="relative h-40 sm:h-[180px]">
                 {room.imagen ? (
@@ -71,13 +99,13 @@ export function AdminHabitaciones() {
                     color: room.disponible ? '#16a34a' : '#dc2626',
                   }}
                 >
-                  {room.disponible ? 'Disponible' : 'Ocupada'}
+                  {room.disponible ? 'Activa' : 'Inactiva'}
                 </span>
               </div>
               <div className="p-5">
                 <h3 className="font-black text-[#1e3a5f] tracking-wide mb-1">{room.nombre}</h3>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest capitalize mb-3">
-                  {room.tipo} · {room.capacidad} personas
+                  {room.tipo} · {room.capacidad} personas · {room.cantidad_total} unidad{room.cantidad_total !== 1 ? 'es' : ''}
                 </p>
                 <p className="font-black text-[#f59e0b] mb-4">
                   S/ {room.precio}
@@ -125,16 +153,17 @@ export function AdminHabitaciones() {
             <form onSubmit={guardar} className="flex flex-col gap-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label:'Nombre *', field:'nombre', type:'text', placeholder:'Hab. Doble' },
-                  { label:'Precio/noche *', field:'precio', type:'number', placeholder:'150' },
-                  { label:'Capacidad', field:'capacidad', type:'number', placeholder:'2' },
+                  { label: 'Nombre *', field: 'nombre', type: 'text', placeholder: 'Hab. Doble' },
+                  { label: 'Precio/noche *', field: 'precio', type: 'number', placeholder: '150' },
+                  { label: 'Capacidad', field: 'capacidad', type: 'number', placeholder: '2' },
+                  { label: 'Cantidad total', field: 'cantidad_total', type: 'number', placeholder: '1' },
                 ].map(({ label, field, type, placeholder }) => (
                   <div key={field}>
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">{label}</label>
                     <input
                       type={type}
                       value={form[field]}
-                      onChange={e => setForm({
+                      onChange={(e) => setForm({
                         ...form,
                         [field]: type === 'number' ? Number(e.target.value) : e.target.value,
                       })}
@@ -143,24 +172,12 @@ export function AdminHabitaciones() {
                     />
                   </div>
                 ))}
-                <div>
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Tipo *</label>
-                  <select
-                    value={form.tipo}
-                    onChange={e => setForm({ ...form, tipo: e.target.value })}
-                    className="w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-gray-700 px-3.5 py-3"
-                  >
-                    {['simple','doble','triple','familiar','suite'].map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
               <div>
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">URL imagen</label>
                 <input
                   value={form.imagen}
-                  onChange={e => setForm({ ...form, imagen: e.target.value })}
+                  onChange={(e) => setForm({ ...form, imagen: e.target.value })}
                   placeholder="https://..."
                   className="w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-gray-700 px-3.5 py-3"
                 />
@@ -169,7 +186,7 @@ export function AdminHabitaciones() {
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-2">Descripción</label>
                 <textarea
                   value={form.descripcion}
-                  onChange={e => setForm({ ...form, descripcion: e.target.value })}
+                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
                   rows={3}
                   className="w-full border border-gray-200 bg-gray-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-gray-700 resize-none px-3.5 py-3"
                 />
@@ -179,10 +196,10 @@ export function AdminHabitaciones() {
                   type="checkbox"
                   id="disp"
                   checked={form.disponible}
-                  onChange={e => setForm({ ...form, disponible: e.target.checked })}
+                  onChange={(e) => setForm({ ...form, disponible: e.target.checked })}
                   className="accent-[#1e3a5f] w-4 h-4"
                 />
-                <label htmlFor="disp" className="text-sm font-semibold text-gray-600">Disponible</label>
+                <label htmlFor="disp" className="text-sm font-semibold text-gray-600">Activa (visible para reservas)</label>
               </div>
               <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button

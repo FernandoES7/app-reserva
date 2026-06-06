@@ -28,10 +28,13 @@ export function MisReservas() {
 
   const handleCancel = async () => {
     try {
-      await reservasAPI.cancel(cancelId);
+      await reservasAPI.cancel(cancelId, 'Cancelada por el cliente');
       setReservas(prev => prev.map(r => r.id === cancelId ? { ...r, estado: 'cancelada' } : r));
-    } catch (err) { console.error(err); }
-    finally { setCancelId(null); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCancelId(null);
+    }
   };
 
   const activas   = reservas.filter(r => r.estado === 'confirmada');

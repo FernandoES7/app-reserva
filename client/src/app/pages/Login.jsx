@@ -17,7 +17,7 @@ export function Login() {
   const { login, register } = useAuth();
   const [tab, setTab] = useState('login');
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [regData, setRegData] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [regData, setRegData] = useState({ name: '', email: '', documento: '', password: '', confirm: '' });
   const [pwFocus, setPwFocus] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +37,10 @@ export function Login() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    if (!regData.name || !regData.email || !regData.password) { setError('Completa todos los campos'); return; }
+    if (!regData.name || !regData.email || !regData.documento || !regData.password) {
+      setError('Completa todos los campos obligatorios');
+      return;
+    }
     if (!isPasswordValid(regData.password)) {
       setError('La contraseña no cumple los requisitos de seguridad');
       return;
@@ -45,7 +48,7 @@ export function Login() {
     if (regData.password !== regData.confirm) { setError('Las contraseñas no coinciden'); return; }
     try {
       setLoading(true);
-      await register(regData.name, regData.email, regData.password);
+      await register(regData.name, regData.email, regData.password, regData.documento.trim());
       navigate('/mis-reservas');
     } catch (err) { setError(err.message || 'Error al registrar'); }
     finally { setLoading(false); }
@@ -145,6 +148,20 @@ export function Login() {
                     value={regData.email}
                     onChange={(e) => setRegData({ ...regData, email: e.target.value })}
                     placeholder="tu@email.com"
+                    className={inputClass}
+                    style={{ padding: '14px 16px' }}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5" style={{ marginBottom: '10px' }}>
+                    <span className="material-icons" style={{ fontSize: '14px' }}>badge</span> DNI / Pasaporte *
+                  </label>
+                  <input
+                    type="text"
+                    value={regData.documento}
+                    onChange={(e) => setRegData({ ...regData, documento: e.target.value })}
+                    placeholder="12345678"
                     className={inputClass}
                     style={{ padding: '14px 16px' }}
                   />

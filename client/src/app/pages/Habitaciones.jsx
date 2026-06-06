@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HabitacionCard } from '../components/HabitacionCard';
-import { roomsAPI } from '../services/api';
+import { habitacionesAPI } from '../services/api';
+import { mapTiposHabitacion } from '../utils/mapTipoHabitacion';
 
 const FALLBACK = [
   { id:1, nombre:'Habitación Simple',   tipo:'simple',   precio:120, capacidad:1, disponible:true, descripcion:'Habitación acogedora perfecta para viajeros solitarios.',    imagen:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80', servicios:['WiFi','TV Cable','Baño privado'] },
@@ -19,8 +20,12 @@ export function Habitaciones() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    roomsAPI.getAll()
-      .then(d => setRooms(d.rooms?.length ? d.rooms : FALLBACK))
+    habitacionesAPI
+      .getTipos()
+      .then((d) => {
+        const tipos = mapTiposHabitacion(d.data);
+        setRooms(tipos.length ? tipos : FALLBACK);
+      })
       .catch(() => setRooms(FALLBACK))
       .finally(() => setLoading(false));
   }, []);

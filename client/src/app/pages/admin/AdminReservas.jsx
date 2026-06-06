@@ -22,7 +22,11 @@ export function AdminReservas() {
 
   const handleStatus = async (id, status) => {
     try {
-      await reservasAPI.updateStatus(id, status);
+      if (status === 'cancelada') {
+        await reservasAPI.cancel(id, 'Cancelada por el administrador');
+      } else {
+        await reservasAPI.updateStatus(id, status);
+      }
       setReservas(prev => prev.map(r => r.id === id ? {...r, estado: status} : r));
     } catch (err) { console.error(err); }
   };

@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { reservasAPI } from '../services/api';
+import { authAPI, reservasAPI } from '../services/api';
 import { StepIndicator } from '../components/reservar/StepIndicator';
 import { Step1Fechas } from '../components/reservar/Step1Fechas';
 import { Step2DatosPersonales } from '../components/reservar/Step2DatosPersonales';
@@ -21,19 +21,48 @@ function buildEstadoInicial(user) {
       apellido: partes.slice(1).join(' ') || '',
       email: user?.email || '',
       telefono: '',
-      dni: '',
+      dni: user?.documento || '',
     },
   };
 }
 
 export function Reservar() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
   const [datos, setDatos] = useState(() => buildEstadoInicial(user));
   const [reserva, setReserva] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const syncPerfil = async () => {
+      try {
+        const res = await authAPI.me();
+        const perfil = res.data;
+        if (!perfil) return;
+
+        const partes = (perfil.nombre || '').trim().split(/\s+/);
+        setDatos((d) => ({
+          ...d,
+          cliente: {
+            ...d.cliente,
+            nombre: partes[0] || d.cliente.nombre,
+            apellido: partes.slice(1).join(' ') || d.cliente.apellido,
+            email: perfil.email || d.cliente.email,
+            dni: perfil.documento || d.cliente.dni,
+            telefono: perfil.telefono || d.cliente.telefono,
+          },
+        }));
+      } catch {
+        // perfil opcional si falla la petición
+      }
+    };
+
+    syncPerfil();
+  }, [isAuthenticated]);
 
   const actualizar = (parcial) => setDatos((d) => ({ ...d, ...parcial }));
 
@@ -48,7 +77,9 @@ export function Reservar() {
   const totalPagar = useMemo(
     () =>
       (datos.tiposInfo || []).reduce((acc, tipo) => {
-        return acc + (datos.seleccion[tipo.id] || 0) * tipo.precio_noche * noches;
+        const id = tipo.id ?? tipo.id_tipo;
+        const precio = tipo.precio_noche ?? tipo.precio_base;
+        return acc + (datos.seleccion[id] || 0) * precio * noches;
       }, 0),
     [datos.tiposInfo, datos.seleccion, noches]
   );
@@ -60,8 +91,12 @@ export function Reservar() {
       const seleccionArray = Object.entries(datos.seleccion)
         .filter(([, cant]) => cant > 0)
         .map(([tipoId, cantidad]) => {
-          const tipo = datos.tiposInfo.find((t) => t.id === Number(tipoId));
-          return { tipoId: Number(tipoId), cantidad, precioNoche: tipo?.precio_noche };
+          const tipo = datos.tiposInfo.find((t) => (t.id ?? t.id_tipo) === Number(tipoId));
+          return {
+            tipoId: Number(tipoId),
+            cantidad,
+            precioNoche: tipo?.precio_noche ?? tipo?.precio_base,
+          };
         });
 
       const res = await reservasAPI.create({
@@ -108,6 +143,7 @@ export function Reservar() {
           {step === 2 && (
             <Step2DatosPersonales
               datos={datos}
+              logueado={isAuthenticated}
               onDatosChange={actualizar}
               onSiguiente={() => setStep(3)}
               onAnterior={() => setStep(1)}

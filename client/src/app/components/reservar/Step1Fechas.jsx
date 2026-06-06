@@ -5,6 +5,13 @@ import { ListaHabitaciones } from './ListaHabitaciones';
 import { habitacionesAPI } from '../../services/api';
 
 const fmt = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`;
+const tipoId = (tipo) => tipo.id ?? tipo.id_tipo;
+const normalizarTipo = (t) => ({
+  ...t,
+  id: t.id ?? t.id_tipo,
+  precio_base: t.precio_base ?? t.precio_noche,
+  precio_noche: t.precio_noche ?? t.precio_base,
+});
 
 const diffDias = (a, b) => {
   if (!a || !b) return 0;
@@ -28,11 +35,12 @@ export function Step1Fechas({ datos, onDatosChange, onSiguiente, onCancelar }) {
     setError(null);
     try {
       const res = await habitacionesAPI.getDisponibles(checkin, checkout);
-      const tipos = res.data || [];
+      const tipos = (res.data || []).map(normalizarTipo);
       const nuevaSeleccion = { ...seleccion };
       for (const tipo of tipos) {
-        if ((nuevaSeleccion[tipo.id] || 0) > tipo.disponibles) {
-          nuevaSeleccion[tipo.id] = tipo.disponibles;
+        const id = tipoId(tipo);
+        if ((nuevaSeleccion[id] || 0) > tipo.disponibles) {
+          nuevaSeleccion[id] = tipo.disponibles;
         }
       }
       onDatosChange({ seleccion: nuevaSeleccion, tiposInfo: tipos });
@@ -47,7 +55,7 @@ export function Step1Fechas({ datos, onDatosChange, onSiguiente, onCancelar }) {
 
   const totalHabitaciones = Object.values(seleccion).reduce((a, b) => a + b, 0);
   const totalPagar = tiposDisponibles.reduce(
-    (acc, tipo) => acc + (seleccion[tipo.id] || 0) * tipo.precio_noche * noches,
+    (acc, tipo) => acc + (seleccion[tipoId(tipo)] || 0) * tipo.precio_base * noches,
     0
   );
   const puedeAvanzar = buscado && totalHabitaciones > 0;

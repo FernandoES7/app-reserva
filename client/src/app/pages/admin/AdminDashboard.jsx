@@ -115,13 +115,15 @@ export function AdminDashboard() {
                     className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0"
                   >
                     <div className="min-w-0">
-                      <p className="font-bold text-[#1e3a5f] text-sm truncate">{r.nombre_cliente || r.customerName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 truncate">{r.habitacion_nombre || r.roomName}</p>
+                      <p className="font-bold text-[#1e3a5f] text-sm truncate">{r.nombre_cliente || r.customerName || 'Cliente'}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{r.habitacion_nombre || r.roomName || r.codigo || '—'}</p>
                     </div>
                     <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-1 shrink-0">
-                      <p className="font-black text-[#1e3a5f] text-sm">S/ {r.total || r.totalPrice}</p>
-                      <span className="text-xs font-bold rounded-full px-2.5 py-0.5" style={{ background: st.bg, color: st.color }}>
-                        {r.estado || r.status}
+                      <p className="font-black text-[#1e3a5f] text-sm">
+                        S/ {Number(r.total ?? r.totalPrice ?? 0).toLocaleString('es-PE')}
+                      </p>
+                      <span className="text-xs font-bold rounded-full px-2.5 py-0.5 capitalize" style={{ background: st.bg, color: st.color }}>
+                        {r.estado || r.status || 'pendiente'}
                       </span>
                     </div>
                   </div>

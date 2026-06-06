@@ -5,9 +5,10 @@ const AuthContext = createContext(null);
 
 function mapUsuario(usuario, token) {
   return {
-    id: usuario.id,
+    id: usuario.id ?? usuario.id_cliente,
     name: usuario.nombre,
     email: usuario.email,
+    documento: usuario.documento,
     role: usuario.rol === 'admin' ? 'admin' : 'customer',
     token,
   };
@@ -51,8 +52,8 @@ export function AuthProvider({ children }) {
     return persistSession(res.data.usuario, res.data.token, setUser);
   };
 
-  const register = async (nombre, email, password) => {
-    const res = await authAPI.register(nombre, email, password);
+  const register = async (nombre, email, password, documento) => {
+    const res = await authAPI.register(nombre, email, password, documento);
     return persistSession(res.data.usuario, res.data.token, setUser);
   };
 

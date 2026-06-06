@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { roomsAPI } from '../services/api';
+import { habitacionesAPI } from '../services/api';
+import { mapTiposHabitacion } from '../utils/mapTipoHabitacion';
 
 const BENEFICIOS = [
   { icon: 'wifi',       title: 'WiFi Gratuito',      desc: 'Internet de alta velocidad en todas las áreas' },
@@ -30,8 +31,12 @@ export function Home() {
   const [search, setSearch] = useState({ checkIn: '', checkOut: '', guests: 1 });
 
   useEffect(() => {
-    roomsAPI.getAll()
-      .then(d => setRooms(d.rooms?.length ? d.rooms : ROOMS_FALLBACK))
+    habitacionesAPI
+      .getTipos()
+      .then((d) => {
+        const tipos = mapTiposHabitacion(d.data);
+        setRooms(tipos.length ? tipos : ROOMS_FALLBACK);
+      })
       .catch(() => setRooms(ROOMS_FALLBACK));
   }, []);
 

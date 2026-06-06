@@ -6,7 +6,8 @@ const NAV = [
   { to: '/admin',              icon: 'dashboard',       label: 'Dashboard' },
   { to: '/admin/habitaciones', icon: 'hotel',           label: 'Habitaciones' },
   { to: '/admin/reservas',     icon: 'event_available', label: 'Reservas' },
-  { to: '/admin/usuarios',     icon: 'group',           label: 'Usuarios' },
+  { to: '/admin/usuarios',     icon: 'group',           label: 'Clientes' },
+  { to: '/admin/empleados',    icon: 'badge',           label: 'Empleados' },
 ];
 
 function SidebarContent({ pathname, user, onNavigate, onLogout }) {

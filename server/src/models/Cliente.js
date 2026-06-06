@@ -1,60 +1,231 @@
 import pool from '../database/connection.js';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
-export const findOrCreate = async ({ nombre, apellido, email, telefono, dni }) => {
-  const [existing] = await pool.query(
-    'SELECT * FROM clientes WHERE email = ?',
-    [email]
-  );
-  if (existing.length > 0) return existing[0];
+export const crear = async ({
+    nombre,
+    email,
+    password,
+    telefono,
+    documento
+}) => {
 
-  const [result] = await pool.query(
-    'INSERT INTO clientes (nombre, apellido, email, telefono, dni) VALUES (?,?,?,?,?)',
-    [nombre, apellido, email, telefono || null, dni || null]
-  );
-  const [rows] = await pool.query('SELECT * FROM clientes WHERE id = ?', [result.insertId]);
-  return rows[0];
+    const passwordHash =
+        await bcrypt.hash(password, 10);
+
+    const [result] = await pool.query(
+        `
+        INSERT INTO cliente
+        (
+            nombre,
+            email,
+            password_hash,
+            telefono,
+            documento
+        )
+        VALUES (?,?,?,?,?)
+        `,
+        [
+            nombre,
+            email,
+            passwordHash,
+            telefono || null,
+            documento
+        ]
+    );
+
+    return findById(result.insertId);
 };
 
-const SELECT_CLIENTE = `
-  SELECT
-    c.*,
-    COUNT(r.id) AS num_reservas,
-    u.rol AS usuario_rol
-  FROM clientes c
-  LEFT JOIN reservas r ON r.cliente_id = c.id
-  LEFT JOIN usuarios u ON u.email = c.email AND u.activo = TRUE
-`;
+export const findById = async (id) => {
+
+    const [rows] = await pool.query(
+        `
+        SELECT
+            id_cliente,
+            nombre,
+            email,
+            password_hash,
+            telefono,
+            documento,
+            estado
+        FROM cliente
+        WHERE id_cliente = ?
+        `,
+        [id]
+    );
+
+    return rows[0] || null;
+};
+
+export const findByEmail = async (email) => {
+
+    const [rows] = await pool.query(
+        `
+        SELECT *
+        FROM cliente
+        WHERE email = ?
+        `,
+        [email]
+    );
+
+    return rows[0] || null;
+};
+
+export const findByDocumento = async (documento) => {
+    if (!documento) return null;
+
+    const [rows] = await pool.query(
+        `
+        SELECT *
+        FROM cliente
+        WHERE documento = ?
+        `,
+        [documento]
+    );
+
+    return rows[0] || null;
+};
 
 export const getAll = async () => {
-  const [rows] = await pool.query(
-    `${SELECT_CLIENTE}
-     GROUP BY c.id, u.rol
-     ORDER BY c.created_at DESC`
-  );
-  return rows;
-};
 
-export const getById = async (id) => {
-  const [[row]] = await pool.query(
-    `${SELECT_CLIENTE}
-     WHERE c.id = ?
-     GROUP BY c.id, u.rol`,
-    [id]
-  );
-  return row || null;
+    const [rows] = await pool.query(
+        `
+        SELECT
+            c.*,
+            COUNT(r.id_reserva) AS total_reservas
+        FROM cliente c
+        LEFT JOIN reserva r
+            ON r.id_cliente = c.id_cliente
+        GROUP BY c.id_cliente
+        ORDER BY c.created_at DESC
+        `
+    );
+
+    return rows;
 };
 
 export const eliminar = async (id) => {
-  const [[{ total }]] = await pool.query(
-    'SELECT COUNT(*) AS total FROM reservas WHERE cliente_id = ?',
-    [id]
+
+    const [result] = await pool.query(
+        `
+        UPDATE cliente
+        SET estado='inactivo'
+        WHERE id_cliente=?
+        `,
+        [id]
+    );
+
+    return result.affectedRows > 0;
+};
+
+export const setResetToken = async (email) => {
+
+  const token =
+      crypto.randomBytes(32).toString('hex');
+
+  const expires =
+      new Date(Date.now() + 3600000);
+
+  const [result] = await pool.query(
+      `
+      UPDATE cliente
+      SET
+          reset_token=?,
+          reset_token_expires=?
+      WHERE email=?
+      `,
+      [
+          token,
+          expires,
+          email
+      ]
   );
-  if (total > 0) {
-    const err = new Error('No se puede eliminar: el cliente tiene reservas asociadas');
-    err.code = 'HAS_RESERVATIONS';
-    throw err;
+
+  if (!result.affectedRows) {
+      return null;
   }
-  const [result] = await pool.query('DELETE FROM clientes WHERE id = ?', [id]);
-  if (result.affectedRows === 0) return null;
-  return true;
+
+  return token;
+};
+
+export const resetPassword =
+async (token, nuevaPassword) => {
+
+    const [rows] = await pool.query(
+        `
+        SELECT *
+        FROM cliente
+        WHERE reset_token = ?
+        AND reset_token_expires > NOW()
+        `,
+        [token]
+    );
+
+    if (!rows.length) {
+        return false;
+    }
+
+    const hash =
+        await bcrypt.hash(
+            nuevaPassword,
+            10
+        );
+
+    await pool.query(
+        `
+        UPDATE cliente
+        SET
+            password_hash=?,
+            reset_token=NULL,
+            reset_token_expires=NULL
+        WHERE id_cliente=?
+        `,
+        [
+            hash,
+            rows[0].id_cliente
+        ]
+    );
+
+    return true;
+};
+
+export const findOrCreate = async ({ nombre, apellido, email, telefono, dni }) => {
+    const nombreCompleto = [nombre, apellido].filter(Boolean).join(' ').trim();
+    const emailNorm = email?.trim();
+    const documento = dni?.trim();
+
+    let existente = emailNorm ? await findByEmail(emailNorm) : null;
+    if (!existente && documento) {
+        existente = await findByDocumento(documento);
+    }
+
+    if (existente) {
+        await pool.query(
+            `
+            UPDATE cliente
+            SET nombre = ?, telefono = COALESCE(?, telefono)
+            WHERE id_cliente = ?
+            `,
+            [nombreCompleto || existente.nombre, telefono || null, existente.id_cliente]
+        );
+        return {
+            id: existente.id_cliente,
+            ...existente,
+            nombre: nombreCompleto || existente.nombre,
+            telefono: telefono || existente.telefono,
+        };
+    }
+
+    const passwordHash = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
+
+    const [result] = await pool.query(
+        `
+        INSERT INTO cliente (nombre, email, password_hash, telefono, documento)
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [nombreCompleto, emailNorm, passwordHash, telefono || null, documento]
+    );
+
+    return { id: result.insertId, nombre: nombreCompleto, email: emailNorm, telefono, documento };
 };
