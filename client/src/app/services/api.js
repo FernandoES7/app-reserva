@@ -83,3 +83,8 @@ export const empleadosAPI = {
 export const statsAPI = {
   getDashboard: () => request('/stats/dashboard'),
 };
+
+export const hotelAPI = {
+  get: () => request('/hotel'),
+  update: (data) => request('/hotel', { method: 'PUT', body: JSON.stringify(data) }),
+};

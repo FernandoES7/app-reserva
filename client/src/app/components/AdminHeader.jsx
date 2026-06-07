@@ -8,6 +8,7 @@ const NAV = [
   { to: '/admin/reservas',     icon: 'event_available', label: 'Reservas' },
   { to: '/admin/usuarios',     icon: 'group',           label: 'Clientes' },
   { to: '/admin/empleados',    icon: 'badge',           label: 'Empleados' },
+  { to: '/admin/configuracion', icon: 'settings',       label: 'Configuración' },
 ];
 
 function SidebarContent({ pathname, user, onNavigate, onLogout }) {

@@ -45,6 +45,7 @@ import { AdminHabitaciones } from './app/pages/admin/AdminHabitaciones';
 import { AdminReservas } from './app/pages/admin/AdminReservas';
 import { AdminUsuarios } from './app/pages/admin/AdminUsuarios';
 import { AdminEmpleados } from './app/pages/admin/AdminEmpleados';
+import { AdminConfiguracion } from './app/pages/admin/AdminConfiguracion';
 
 function MainLayout({ children }) {
   return (
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="/admin/reservas" element={<ProtectedRoute adminOnly><AdminLayout><AdminReservas /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/usuarios" element={<ProtectedRoute adminOnly><AdminLayout><AdminUsuarios /></AdminLayout></ProtectedRoute>} />
               <Route path="/admin/empleados" element={<ProtectedRoute adminOnly><AdminLayout><AdminEmpleados /></AdminLayout></ProtectedRoute>} />
+              <Route path="/admin/configuracion" element={<ProtectedRoute adminOnly><AdminLayout><AdminConfiguracion /></AdminLayout></ProtectedRoute>} />
 
               <Route path="/" element={<MainLayout><Home /></MainLayout>} />
               <Route path="/habitaciones" element={<MainLayout><Habitaciones /></MainLayout>} />

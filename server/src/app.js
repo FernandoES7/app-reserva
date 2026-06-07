@@ -6,6 +6,7 @@ import empleadoRoutes from './routes/Empleado.js';
 import clienteRoutes from './routes/Cliente.js';
 import reservaRoutes       from './routes/Reserva.js';
 import statsRoutes         from './routes/Stats.js';
+import hotelRoutes         from './routes/Hotel.js';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/reservas',     reservaRoutes);
 app.use('/api/empleados',    empleadoRoutes);
 app.use('/api/clientes',     clienteRoutes);
 app.use('/api/stats',        statsRoutes);
+app.use('/api/hotel',        hotelRoutes);
 
 // ── 404 ───────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ ok: false, message: 'Ruta no encontrada' }));
