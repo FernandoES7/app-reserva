@@ -1,4 +1,5 @@
 import pool from '../database/connection.js';
+import * as FacturaModel from './Factura.js';
 
 const generarCodigoReserva = () => {
     const fecha = new Date()
@@ -149,6 +150,11 @@ export const getById = async (idReserva) => {
         id: h.id_habitacion,
         tipo_nombre: h.tipo_habitacion,
     }));
+
+    const factura = await FacturaModel.getByReserva(idReserva);
+    if (factura) {
+        reserva.factura = factura;
+    }
 
     return reserva;
 };

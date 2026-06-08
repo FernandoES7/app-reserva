@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { reservasAPI } from '../services/api';
+import { BoletaModal } from '../components/BoletaModal';
 
 const STATUS = {
   confirmada: { label: 'Confirmada', bg: '#dcfce7', color: '#16a34a', icon: 'check_circle' },
@@ -17,6 +18,7 @@ export function MisReservas() {
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelId, setCancelId] = useState(null);
+  const [comprobanteId, setComprobanteId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
@@ -78,10 +80,10 @@ export function MisReservas() {
           ))}
         </div>
         <div className="flex gap-3 border-t border-gray-100" style={{ paddingTop: '24px' }}>
-          <button onClick={() => window.print()}
+          <button onClick={() => setComprobanteId(res.id)}
             className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-500 hover:bg-gray-50 text-sm font-bold rounded-xl transition-colors"
             style={{ padding: '12px' }}>
-            <span className="material-icons" style={{ fontSize: '16px' }}>download</span> Comprobante
+            <span className="material-icons" style={{ fontSize: '16px' }}>receipt_long</span> Comprobante
           </button>
           {showCancel && (
             <button onClick={() => setCancelId(res.id)}
@@ -156,6 +158,13 @@ export function MisReservas() {
           </section>
         )}
       </div>
+
+      {comprobanteId && (
+        <BoletaModal
+          reservaId={comprobanteId}
+          onClose={() => setComprobanteId(null)}
+        />
+      )}
 
       {cancelId && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4"

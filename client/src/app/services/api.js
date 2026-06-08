@@ -44,6 +44,12 @@ export const habitacionesAPI = {
   updateTipo: (id, data) =>
     request(`/habitaciones/tipos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTipo: (id) => request(`/habitaciones/tipos/${id}`, { method: 'DELETE' }),
+  getUnidades: (tipoId) => request(`/habitaciones/tipos/${tipoId}/unidades`),
+  createUnidad: (tipoId, data) =>
+    request(`/habitaciones/tipos/${tipoId}/unidades`, { method: 'POST', body: JSON.stringify(data) }),
+  updateUnidad: (id, data) =>
+    request(`/habitaciones/unidades/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUnidad: (id) => request(`/habitaciones/unidades/${id}`, { method: 'DELETE' }),
 };
 
 export const reservasAPI = {
@@ -86,5 +92,6 @@ export const statsAPI = {
 
 export const hotelAPI = {
   get: () => request('/hotel'),
+  getPublic: () => request('/hotel/public'),
   update: (data) => request('/hotel', { method: 'PUT', body: JSON.stringify(data) }),
 };

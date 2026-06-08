@@ -1,4 +1,10 @@
 import * as TipoHabitacionModel from '../models/Tipohabitacion.js';
+import * as HabitacionModel from '../models/Habitacion.js';
+import { HistorialError } from '../models/Habitacion.js';
+import * as HotelModel from '../models/Hotel.js';
+
+const esErrorHistorial = (error) =>
+  error instanceof HistorialError || error.code === 'HISTORIAL_RESERVA';
 
 export const getTodos = async (req, res) => {
   try {
@@ -71,19 +77,121 @@ export const actualizarTipo = async (req, res) => {
     res.json({ ok: true, data: tipo });
   } catch (error) {
     console.error(error);
+    if (esErrorHistorial(error)) {
+      return res.status(409).json({ ok: false, message: error.message, code: 'HISTORIAL_RESERVA' });
+    }
     res.status(500).json({ ok: false, message: 'Error al actualizar tipo de habitación', error: error.message });
   }
 };
 
 export const eliminarTipo = async (req, res) => {
   try {
-    const eliminado = await TipoHabitacionModel.eliminar(req.params.id);
-    if (!eliminado) {
+    const resultado = await TipoHabitacionModel.eliminar(req.params.id);
+    if (resultado.notFound) {
       return res.status(404).json({ ok: false, message: 'Tipo de habitación no encontrado' });
     }
-    res.json({ ok: true, message: 'Tipo de habitación desactivado' });
+    res.json({
+      ok: true,
+      accion: resultado.accion,
+      message: resultado.message,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, message: 'Error al eliminar tipo de habitación', error: error.message });
+  }
+};
+
+export const getUnidadesPorTipo = async (req, res) => {
+  try {
+    const unidades = await TipoHabitacionModel.ensureUnidades(req.params.id);
+    if (!unidades) {
+      return res.status(404).json({ ok: false, message: 'Tipo de habitación no encontrado' });
+    }
+    res.json({ ok: true, data: unidades });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, message: 'Error al obtener unidades', error: error.message });
+  }
+};
+
+export const crearUnidad = async (req, res) => {
+  const { numero, piso, estado } = req.body;
+
+  if (!numero?.trim()) {
+    return res.status(400).json({ ok: false, message: 'El número de habitación es requerido' });
+  }
+
+  try {
+    const tipo = await TipoHabitacionModel.getById(req.params.id);
+    if (!tipo) {
+      return res.status(404).json({ ok: false, message: 'Tipo de habitación no encontrado' });
+    }
+
+    const hotel = await HotelModel.getPrincipal();
+    if (!hotel) {
+      return res.status(400).json({ ok: false, message: 'No hay un hotel configurado' });
+    }
+
+    const unidad = await HabitacionModel.crear({
+      id_tipo: Number(req.params.id),
+      id_hotel: hotel.id_hotel,
+      numero: numero.trim(),
+      piso: piso ?? 1,
+      estado: estado || 'disponible',
+    });
+
+    await TipoHabitacionModel.syncCantidadTotal(req.params.id);
+
+    res.status(201).json({ ok: true, data: unidad });
+  } catch (error) {
+    console.error(error);
+    const status = error.code === 'ER_DUP_ENTRY' ? 409 : 500;
+    res.status(status).json({
+      ok: false,
+      message: error.code === 'ER_DUP_ENTRY'
+        ? 'Ya existe una habitación con ese número en el hotel'
+        : 'Error al crear unidad',
+      error: error.message,
+    });
+  }
+};
+
+export const actualizarUnidad = async (req, res) => {
+  try {
+    const unidad = await HabitacionModel.actualizar(req.params.id, req.body);
+    if (!unidad) {
+      return res.status(404).json({ ok: false, message: 'Habitación no encontrada' });
+    }
+    res.json({ ok: true, data: unidad });
+  } catch (error) {
+    console.error(error);
+    const status = error.code === 'ER_DUP_ENTRY' ? 409 : 500;
+    res.status(status).json({
+      ok: false,
+      message: error.code === 'ER_DUP_ENTRY'
+        ? 'Ya existe una habitación con ese número en el hotel'
+        : 'Error al actualizar habitación',
+      error: error.message,
+    });
+  }
+};
+
+export const eliminarUnidad = async (req, res) => {
+  try {
+    const unidad = await HabitacionModel.getById(req.params.id);
+    if (!unidad) {
+      return res.status(404).json({ ok: false, message: 'Habitación no encontrada' });
+    }
+
+    await HabitacionModel.eliminar(req.params.id);
+    await TipoHabitacionModel.syncCantidadTotal(unidad.id_tipo);
+
+    res.json({ ok: true, message: 'Habitación eliminada' });
+  } catch (error) {
+    console.error(error);
+    if (esErrorHistorial(error)) {
+      return res.status(409).json({ ok: false, message: error.message, code: 'HISTORIAL_RESERVA' });
+    }
+    res.status(400).json({ ok: false, message: error.message || 'Error al eliminar habitación' });
   }
 };

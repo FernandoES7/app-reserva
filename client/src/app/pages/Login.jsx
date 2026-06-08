@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const PASSWORD_RULES = [
   { id: 'length', label: 'Mínimo 8 caracteres', test: (p) => p.length >= 8 },
   { id: 'upper', label: 'Al menos una letra mayúscula', test: (p) => /[A-Z]/.test(p) },
+  { id: 'lower', label: 'Al menos una letra minúscula', test: (p) => /[a-z]/.test(p) },
   { id: 'number', label: 'Al menos un número', test: (p) => /\d/.test(p) },
   { id: 'special', label: 'Al menos un carácter especial', test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
 ];

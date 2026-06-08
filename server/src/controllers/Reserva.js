@@ -130,6 +130,11 @@ export const obtenerReserva = async (req, res) => {
     if (!reserva) {
       return res.status(404).json({ ok: false, message: 'Reserva no encontrada' });
     }
+
+    if (req.usuario.tipo === 'cliente' && reserva.email !== req.usuario.email) {
+      return res.status(403).json({ ok: false, message: 'No autorizado para ver esta reserva' });
+    }
+
     res.json({ ok: true, data: reserva });
   } catch (error) {
     console.error(error);

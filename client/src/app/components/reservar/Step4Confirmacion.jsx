@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { CheckCircle, Calendar, Users, Home, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { BoletaModal } from '../BoletaModal';
 
 const fmt = (n) => `S/ ${Number(n).toLocaleString('es-PE')}`;
 
@@ -10,6 +12,8 @@ const formatFecha = (f) => {
 };
 
 export function Step4Confirmacion({ reserva }) {
+  const [verBoleta, setVerBoleta] = useState(false);
+
   if (!reserva) return null;
 
   const checkin = formatFecha(reserva.fecha_checkin);
@@ -87,7 +91,7 @@ export function Step4Confirmacion({ reserva }) {
       <div className="flex justify-center gap-3 mt-6 flex-wrap">
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => setVerBoleta(true)}
           className="flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
         >
           <Download size={15} />
@@ -104,6 +108,13 @@ export function Step4Confirmacion({ reserva }) {
       <p className="text-xs text-gray-400 mt-6">
         Guarda tu código de reserva. Lo necesitarás para cualquier consulta o modificación.
       </p>
+
+      {verBoleta && (
+        <BoletaModal
+          reservaInicial={reserva}
+          onClose={() => setVerBoleta(false)}
+        />
+      )}
     </div>
   );
 }

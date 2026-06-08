@@ -1,5 +1,29 @@
 import * as HotelModel from '../models/Hotel.js';
 
+export const obtenerPublico = async (_req, res) => {
+    try {
+        const hotel = await HotelModel.getPrincipal();
+
+        if (!hotel) {
+            return res.status(404).json({ ok: false, message: 'No hay datos del hotel configurados' });
+        }
+
+        res.json({
+            ok: true,
+            data: {
+                nombre: hotel.nombre,
+                direccion: hotel.direccion,
+                telefono: hotel.telefono,
+                email: hotel.email,
+                categoria: hotel.categoria,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ ok: false, message: 'Error al obtener datos del hotel', error: error.message });
+    }
+};
+
 export const obtener = async (_req, res) => {
     try {
         const hotel = await HotelModel.getPrincipal();
